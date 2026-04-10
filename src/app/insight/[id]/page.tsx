@@ -1,9 +1,10 @@
-﻿import { query } from '@/lib/db';
+import { query } from '@/lib/db';
 import Link from 'next/link';
 import { ArrowLeft, Download, Calendar, Tag, FileText } from 'lucide-react';
 
-export default async function InsightDetail({ params }: { params: { id: string } }) {
-  const posts: any = await query('SELECT * FROM posts WHERE id = ?', [params.id]);
+export default async function InsightDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const posts: any = await query('SELECT * FROM posts WHERE id = ?', [id]);
   const post = posts[0];
 
   if (!post) return <div className="text-center py-24">글을 찾을 수 없습니다.</div>;

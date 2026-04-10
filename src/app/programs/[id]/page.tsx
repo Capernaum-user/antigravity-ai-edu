@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { ArrowLeft, CheckCircle, Clock, Target, BookOpen, Layers } from 'lucide-react';
 
 const PROGRAMS_DATA: any = {
@@ -6,8 +6,9 @@ const PROGRAMS_DATA: any = {
   'aice-future': { title: 'AICE Future 완벽 대비', category: '자격증', target: '초등 고학년/중등', desc: 'KT AICE Future 자격증 취득을 위한 핵심 과정입니다.', goals: ['AICE Future 평가 항목 완벽 숙지', '실무형 AI 문제 해결 능력 배양', '자격증 취득을 통한 자신감 향상'], curriculum: ['1차시: 데이터의 이해와 수집', '2차시: 모델링 기초와 평가', '3차시: 기출문제 풀이 및 분석', '4차시: 모의고사 및 실전 대비'] }
 };
 
-export default function ProgramDetail({ params }: { params: { id: string } }) {
-  const program = PROGRAMS_DATA[params.id] || PROGRAMS_DATA['ai-block-intro'];
+export default async function ProgramDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const program = PROGRAMS_DATA[id] || PROGRAMS_DATA['ai-block-intro'];
   return (
     <div className='bg-white min-h-screen pb-20'>
       <section className='bg-slate-900 text-white py-20'><div className='max-w-7xl mx-auto px-4'><Link href='/programs' className='flex items-center text-primary-400 mb-8 hover:text-primary-300'><ArrowLeft className='h-4 w-4 mr-2'/>목록으로</Link><h1 className='text-4xl font-bold mb-4'>{program.title}</h1><p className='text-slate-400 text-lg'>{program.desc}</p></div></section>

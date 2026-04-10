@@ -9,11 +9,11 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center space-x-2 mb-6">
               <BrainCircuit className="h-7 w-7 text-primary-400" />
-              <span className="text-xl font-bold text-white tracking-tight">Antigravity <span className="text-primary-400">AI Edu</span></span>
+              <span className="text-xl font-bold text-white tracking-tight">Maieutic <span className="text-primary-400">AI Edu</span></span>
             </div>
             <p className="text-sm leading-relaxed mb-6">
-              질문하고 토론하며 스스로 배우는 AI·코딩 수업. 
-              아이들이 단순히 따라하는 것이 아니라 스스로 생각하고 표현하는 미래 교육을 지향합니다.
+              <strong>Maieutic(마이유틱)</strong>은 소크라테스의 산파술을 의미합니다.<br/>
+              지식을 주입하는 것이 아니라, 끊임없는 질문을 통해 아이들 스스로 해답과 생각을 낳도록 돕는 미래 교육을 지향합니다.
             </p>
           </div>
 
@@ -42,7 +42,7 @@ const Footer = () => {
             <ul className="space-y-4 text-sm">
               <li className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-primary-400" />
-                <span>antigravity.edu@gmail.com</span>
+                <span>maieutic.edu@gmail.com</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-primary-400" />
@@ -57,7 +57,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-xs">
-          <p>© 2026 Antigravity AI Edu. All rights reserved. KT Wise AI Coding Instructor.</p>
+          <p>© 2026 Maieutic AI Edu. All rights reserved. KT Wise AI Coding Instructor.</p>
           <div className="flex space-x-6">
             <Link href="/privacy" className="hover:text-white">개인정보처리방침</Link>
             <Link href="/terms" className="hover:text-white">이용약관</Link>

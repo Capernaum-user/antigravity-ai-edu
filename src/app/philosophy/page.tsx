@@ -31,7 +31,7 @@ export default function Philosophy() {
               <strong>'어떤 질문이 우리 삶을 더 가치 있게 만드는가'</strong>입니다.
             </p>
             <p>
-              Antigravity AI Edu는 아이들이 AI 기술의 파도에 휩쓸리지 않고, 스스로 생각의 키를 잡을 수 있도록 돕습니다. 
+              Maieutic AI Edu는 아이들이 AI 기술의 파도에 휩쓸리지 않고, 스스로 생각의 키를 잡을 수 있도록 돕습니다. 
               우리의 수업은 단순한 기능 습득을 넘어 철학, 윤리, 과학, 논리를 AI 교육과 긴밀하게 연결합니다.
             </p>
             <p>

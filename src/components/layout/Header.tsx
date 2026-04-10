@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Menu, X, BrainCircuit } from "lucide-react";
@@ -28,7 +28,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="flex items-center space-x-2">
             <BrainCircuit className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-slate-900 tracking-tight">Antigravity <span className="text-primary">AI Edu</span></span>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">Maieutic <span className="text-primary">AI Edu</span></span>
           </Link>
           <nav className="hidden md:flex space-x-8">
             {navItems.map((item) => (

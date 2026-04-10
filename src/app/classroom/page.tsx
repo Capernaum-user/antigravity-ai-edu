@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { BookOpen, CheckCircle2, Play, Info, MessageCircle, Lightbulb } from "lucide-react";
 
 const SAMPLE_LESSONS = [
@@ -150,9 +151,9 @@ export default function Classroom() {
                     <CheckCircle2 className="h-6 w-6 text-green-400" />
                     <span className="text-sm">이 수업을 성공적으로 마쳤다면, 자신의 생각을 정리해보세요.</span>
                   </div>
-                  <button className="px-6 py-2 bg-white text-slate-900 rounded-lg font-bold text-sm">
-                    성찰 일지 쓰기
-                  </button>
+                  <Link href={`/classroom/journal?lessonId=${activeLesson.id}`} className="px-6 py-2 bg-white text-slate-900 rounded-lg font-bold text-sm block hover:bg-slate-100 transition-colors">
+                    성장 일지 쓰기
+                  </Link>
                 </div>
               </div>
             </div>

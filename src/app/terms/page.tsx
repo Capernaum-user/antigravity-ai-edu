@@ -1,1 +1,1 @@
-﻿export default function Terms() { return <div className='max-w-3xl mx-auto py-20 px-4'><h1 className='text-2xl font-bold mb-6'>이용약관</h1><p className='text-slate-600'>본 웹사이트에서 제공하는 교육 자료의 저작권은 Antigravity AI Edu에 있으며, 무단 전재 및 배포를 금합니다.</p></div> }
+export default function Terms() { return <div className='max-w-3xl mx-auto py-20 px-4'><h1 className='text-2xl font-bold mb-6'>이용약관</h1><p className='text-slate-600'>본 웹사이트에서 제공하는 교육 자료의 저작권은 Maieutic AI Edu에 있으며, 무단 전재 및 배포를 금합니다.</p></div> }

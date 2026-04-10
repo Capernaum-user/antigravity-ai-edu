@@ -17,7 +17,7 @@ export default function About() {
             </div>
             <div className="md:w-2/3">
               <div className="inline-block px-3 py-1 bg-primary-100 text-primary-700 text-sm font-bold rounded-full mb-4">
-                Antigravity AI Edu 대표 강사
+                Maieutic AI Edu 대표 강사
               </div>
               <h1 className="text-4xl font-bold text-slate-900 mb-6">"질문하는 아이가 미래를 바꿉니다"</h1>
               <p className="text-lg text-slate-600 leading-relaxed mb-8">

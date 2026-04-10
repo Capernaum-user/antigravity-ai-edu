@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
@@ -57,7 +57,7 @@ export default function Contact() {
               <div className='space-y-8 mt-12'>
                 <div className='flex items-start space-x-4'>
                   <div className='p-3 bg-white rounded-xl shadow-sm'><Mail className='h-6 w-6 text-primary' /></div>
-                  <div><h4 className='font-bold text-slate-900'>Email</h4><p className='text-slate-500 text-sm'>antigravity.edu@gmail.com</p></div>
+                  <div><h4 className='font-bold text-slate-900'>Email</h4><p className='text-slate-500 text-sm'>maieutic.edu@gmail.com</p></div>
                 </div>
                 <div className='flex items-start space-x-4'>
                   <div className='p-3 bg-white rounded-xl shadow-sm'><Phone className='h-6 w-6 text-primary' /></div>

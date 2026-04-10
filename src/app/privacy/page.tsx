@@ -1,1 +1,1 @@
-﻿export default function Privacy() { return <div className='max-w-3xl mx-auto py-20 px-4'><h1 className='text-2xl font-bold mb-6'>개인정보 처리방침</h1><p className='text-slate-600'>Antigravity AI Edu는 교육 상담 및 출강 문의를 위해 필요한 최소한의 개인정보를 수집하며, 관계 법령을 준수합니다.</p></div> }
+export default function Privacy() { return <div className='max-w-3xl mx-auto py-20 px-4'><h1 className='text-2xl font-bold mb-6'>개인정보 처리방침</h1><p className='text-slate-600'>Maieutic AI Edu는 교육 상담 및 출강 문의를 위해 필요한 최소한의 개인정보를 수집하며, 관계 법령을 준수합니다.</p></div> }
