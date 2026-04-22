@@ -1,266 +1,629 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Brain, Lightbulb, MessageSquare, Code, Target, Award } from "lucide-react";
-import { motion, useScroll, useTransform, type Variants } from "framer-motion";
-import { useRef } from "react";
+import { ArrowRight, Brain, Lightbulb, MessageSquare, Code, Target, Award, ChevronDown, ChevronRight } from "lucide-react";
+import { motion, useScroll, useTransform, useInView, type Variants, useMotionValue, useSpring } from "framer-motion";
+import { useRef, useEffect, useState, useCallback } from "react";
 import Magnetic from "@/components/ui/Magnetic";
-import ScatterText from "@/components/ui/ScatterText";
 
+// ─── Counter Animation Hook ───
+function useCountUp(end: number, duration: number = 2000, startOnView: boolean = true) {
+  const [count, setCount] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (startOnView && !isInView) return;
+    if (hasStarted) return;
+    
+    setHasStarted(true);
+    const startTime = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Easing function - easeOutExpo
+      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
+      setCount(Math.floor(end * easeOutExpo));
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+    
+    requestAnimationFrame(animate);
+  }, [end, duration, isInView, startOnView, hasStarted]);
+
+  return { count, ref };
+}
+
+// ─── Smooth Parallax Hook ───
+function useSmoothParallax(factor: number = 0.5) {
+  const { scrollY } = useScroll();
+  const smoothY = useSpring(scrollY, { stiffness: 100, damping: 30 });
+  const y = useTransform(smoothY, (value) => value * factor);
+  return y;
+}
+
+// ─── Animation Variants ───
 const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  hidden: { opacity: 0, y: 60 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+};
+
+const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 1 } }
 };
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.2 } }
 };
+
+const slideInLeft: Variants = {
+  hidden: { opacity: 0, x: -100 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+};
+
+const slideInRight: Variants = {
+  hidden: { opacity: 0, x: 100 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+};
+
+const scaleUp: Variants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.6 } }
+};
+
+// ─── Group Companies Data ───
+const groupCompanies = [
+  {
+    num: "01",
+    title: "IT 솔루션 공급",
+    subtitle: "고객 니즈에 맞는 최상의 솔루션을 제공",
+    desc: "AI블록코딩, 파이썬, 생성형 AI 등 다양한 교육 프로그램",
+    color: "#f72585"
+  },
+  {
+    num: "02",
+    title: "디지털 트랜스포메이션",
+    subtitle: "고객 비즈니스 경쟁력 강화를 위한 디지털 전환 동반자",
+    desc: "미래 교육 방향 제시와 커리큘럼 컨설팅",
+    color: "#00d4ff"
+  },
+  {
+    num: "03",
+    title: "SMART LEARNING",
+    subtitle: "에티버스의 글로벌 IT 경험을 활용한 최신 IT 전문 교육",
+    desc: "KT와이즈교육 공식 강사진의 체계적인 교육",
+    color: "#ff6a00"
+  },
+  {
+    num: "04",
+    title: "AI 인재 양성",
+    subtitle: "글로벌 ICT 인재 양성 프로그램",
+    desc: "AICE Future 자격증 취득 지원",
+    color: "#7b2fff"
+  }
+];
+
+// ─── News Data ───
+const newsData = [
+  {
+    date: "2026.03.31",
+    category: "교육 소식",
+    title: "AI 블록코딩 신규 커리큘럼 런칭",
+    desc: "아이들의 창의적 사고력을 키우는 새로운 AI 블록코딩 교육 과정을 시작합니다."
+  },
+  {
+    date: "2026.03.25",
+    category: "자격증",
+    title: "AICE Future 3급 합격자 배출",
+    desc: "마이유틱 AI 에듀의 체계적인 교육을 통해 다수의 학생들이 자격증 취득에 성공했습니다."
+  },
+  {
+    date: "2026.03.20",
+    category: "파트너십",
+    title: "KT와이즈교육 공식 파트너 선정",
+    desc: "질 높은 AI 교육 콘텐츠 제공을 위한 공식 파트너십을 체결했습니다."
+  }
+];
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
+  const { scrollYProgress } = useScroll();
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  
+  // Parallax effects
+  const heroParallax = useSmoothParallax(-0.3);
+  const textParallax = useSmoothParallax(-0.1);
+  
+  // Counter values
+  const yearsCounter = useCountUp(5, 2500);
+  const studentsCounter = useCountUp(500, 2500);
+  const programsCounter = useCountUp(12, 2000);
+  
+  // Background parallax for hero
+  const bgY = useTransform(scrollYProgress, [0, 0.3], ["0%", "30%"]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+  
+  // Mouse tracking for hero
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 30,
+        y: (e.clientY / window.innerHeight - 0.5) * 30
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   return (
     <div className="flex flex-col w-full overflow-hidden" style={{ background: "#07050f" }}>
 
-      {/* ─── Hero ─── */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
-
-        {/* Parallax background image */}
-        <motion.div
-          style={{ y: bgY, opacity: bgOpacity, willChange: "transform" }}
+      {/* ═══════════════════════════════════════════════════════════════════
+          HERO SECTION - Full Screen with Large Title
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden">
+        
+        {/* Animated Background */}
+        <motion.div 
+          style={{ y: bgY, opacity: bgOpacity }}
           className="absolute inset-0"
-          aria-hidden="true"
         >
-          <div
-            className="absolute inset-0"
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage: "url('/neon-cloud-bg.jpg')",
-              backgroundSize: "cover",
-              backgroundPosition: "center 40%",
+              filter: "brightness(0.4)"
             }}
           />
-          {/* Dark overlay so text is readable */}
-          <div
+          
+          {/* Animated gradient overlay */}
+          <motion.div
+            animate={{
+              background: [
+                "radial-gradient(ellipse at 30% 40%, rgba(247,37,133,0.15) 0%, transparent 50%)",
+                "radial-gradient(ellipse at 70% 60%, rgba(0,212,255,0.15) 0%, transparent 50%)",
+                "radial-gradient(ellipse at 30% 40%, rgba(247,37,133,0.15) 0%, transparent 50%)"
+              ]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to bottom, rgba(7,5,15,0.55) 0%, rgba(7,5,15,0.3) 50%, rgba(7,5,15,0.9) 100%)",
-            }}
           />
         </motion.div>
-
-        {/* Animated neon orbs */}
-        <motion.div
-          animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 right-10 w-[350px] h-[350px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(247,37,133,0.25) 0%, transparent 70%)", filter: "blur(60px)" }}
-        />
-        <motion.div
-          animate={{ x: [0, -50, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 left-10 w-[300px] h-[300px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(0,212,255,0.2) 0%, transparent 70%)", filter: "blur(60px)" }}
-        />
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -60, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/3 left-1/3 w-[200px] h-[200px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(255,106,0,0.15) 0%, transparent 70%)", filter: "blur(50px)" }}
+        
+        {/* Grid pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: "100px 100px"
+          }}
         />
 
-        {/* Neon rectangle frame (matches the image aesthetic) */}
+        {/* Floating orbs with mouse tracking */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, delay: 0.5 }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          style={{ 
+            x: mousePosition.x * 2,
+            y: mousePosition.y * 2
+          }}
+          className="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full pointer-events-none"
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 8, repeat: Infinity }}
         >
-          <motion.div
-            animate={{ opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="w-64 h-64 md:w-96 md:h-96"
-            style={{
-              border: "2px solid transparent",
-              backgroundClip: "padding-box",
-              boxShadow: "0 0 30px rgba(247,37,133,0.4), 0 0 60px rgba(0,212,255,0.2), inset 0 0 30px rgba(255,106,0,0.1)",
-              background: "linear-gradient(rgba(7,5,15,0), rgba(7,5,15,0)) padding-box, linear-gradient(135deg, #ff6a00, #f72585, #00d4ff) border-box",
+          <div 
+            className="w-full h-full rounded-full"
+            style={{ 
+              background: "radial-gradient(circle, rgba(247,37,133,0.2) 0%, transparent 70%)",
+              filter: "blur(60px)"
+            }}
+          />
+        </motion.div>
+        
+        <motion.div
+          style={{ 
+            x: mousePosition.x * -1.5,
+            y: mousePosition.y * -1.5
+          }}
+          className="absolute bottom-1/4 left-1/4 w-[350px] h-[350px] rounded-full pointer-events-none"
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ duration: 10, repeat: Infinity }}
+        >
+          <div 
+            className="w-full h-full rounded-full"
+            style={{ 
+              background: "radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)",
+              filter: "blur(60px)"
             }}
           />
         </motion.div>
 
-        {/* Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+        {/* Main Title Content */}
+        <div className="relative z-10 text-center px-4">
           <motion.div
-            className="text-center max-w-4xl mx-auto"
-            variants={staggerContainer}
             initial="hidden"
             animate="visible"
+            variants={staggerContainer}
           >
-            <motion.div
-              variants={fadeInUp}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-semibold mb-8"
-              style={{
-                background: "rgba(247,37,133,0.1)",
-                border: "1px solid rgba(247,37,133,0.4)",
-                color: "#f72585",
-                boxShadow: "0 0 20px rgba(247,37,133,0.15)",
-              }}
-            >
-              <Award className="h-4 w-4" />
-              <ScatterText text="KT와이즈교육 AI블록코딩 공식 강사" />
-            </motion.div>
-
-            <motion.h1
-              variants={fadeInUp}
-              className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1] text-white"
-            >
-              <ScatterText text="질문하고 토론하며" />
-              <br />
-              <span className="gradient-text-neon">
-                <ScatterText text="스스로 생각하는" />
+            {/* Small subtitle */}
+            <motion.div variants={fadeInUp} className="mb-8">
+              <span 
+                className="inline-block text-sm md:text-base tracking-[0.3em] uppercase font-medium"
+                style={{ color: "#64748b" }}
+              >
+                Challenge for Transformation
               </span>
-              <br />
-              <ScatterText text="AI·코딩 수업" />
-            </motion.h1>
-
-            <motion.p
+            </motion.div>
+            
+            {/* Large Title - ETEVERS Style */}
+            <motion.h1 
               variants={fadeInUp}
-              className="text-lg md:text-xl mb-10 leading-relaxed font-medium"
+              className="relative"
+            >
+              <motion.span 
+                className="block text-6xl md:text-8xl lg:text-[10rem] font-black tracking-tight text-white leading-none"
+                style={{ 
+                  textShadow: "0 0 80px rgba(247,37,133,0.3)",
+                }}
+              >
+                MAIEUTIC
+              </motion.span>
+              <motion.span 
+                className="block text-4xl md:text-6xl lg:text-8xl font-black tracking-[0.2em] mt-2"
+                style={{ 
+                  background: "linear-gradient(135deg, #f72585, #00d4ff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "none"
+                }}
+              >
+                AI EDU
+              </motion.span>
+            </motion.h1>
+            
+            {/* Tagline */}
+            <motion.p 
+              variants={fadeInUp}
+              className="mt-8 text-lg md:text-xl max-w-2xl mx-auto"
               style={{ color: "#94a3b8" }}
             >
-              <ScatterText text="AI블록코딩, 파이썬, 생성형 AI, AICE Future 자격증까지." />
-              <br className="hidden md:block" />
-              <ScatterText text="아이들이 단순히 기술을 따라하는 것이 아니라," />
-              <br className="hidden md:block" />
-              <ScatterText text="철학적 질문을 통해 사고의 구조를 세우고 코딩으로 표현하게 합니다." />
+              질문하고 토론하며 스스로 생각하는 AI·코딩 교육
             </motion.p>
-
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-4">
-              <Magnetic>
-                <Link href="/programs">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-primary flex items-center justify-center space-x-2 py-4 px-8 text-lg"
-                  >
-                    <ScatterText text="프로그램 보기" />
-                    <ArrowRight className="h-5 w-5" />
-                  </motion.div>
-                </Link>
-              </Magnetic>
-              <Magnetic>
-                <Link href="/classroom">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-secondary flex items-center justify-center space-x-2 py-4 px-8 text-lg"
-                  >
-                    <ScatterText text="수업실 체험하기" />
-                  </motion.div>
-                </Link>
-              </Magnetic>
-            </motion.div>
           </motion.div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll Down Indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer"
+          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
         >
-          <span className="text-xs tracking-widest uppercase" style={{ color: "#475569" }}>scroll</span>
+          <span 
+            className="text-xs tracking-[0.3em] uppercase mb-4"
+            style={{ color: "#64748b" }}
+          >
+            SCROLL DOWN
+          </span>
           <motion.div
-            animate={{ y: [0, 8, 0] }}
+            animate={{ y: [0, 10, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-px h-8"
-            style={{ background: "linear-gradient(to bottom, #f72585, transparent)" }}
-          />
+          >
+            <ChevronDown className="w-6 h-6" style={{ color: "#f72585" }} />
+          </motion.div>
         </motion.div>
+
+        {/* Side decorative lines */}
+        <motion.div
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: 1.5, delay: 1 }}
+          className="absolute left-8 top-1/4 w-px h-1/2 origin-top hidden lg:block"
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(247,37,133,0.5), transparent)" }}
+        />
+        <motion.div
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: 1.5, delay: 1.2 }}
+          className="absolute right-8 top-1/4 w-px h-1/2 origin-top hidden lg:block"
+          style={{ background: "linear-gradient(to bottom, transparent, rgba(0,212,255,0.5), transparent)" }}
+        />
       </section>
 
-      {/* ─── Maieutic Storytelling ─── */}
-      <section
-        className="py-24 relative overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #07050f 0%, #0d0a1a 50%, #07050f 100%)" }}
-      >
-        <motion.div
-          initial={{ opacity: 0, rotate: -20 }}
-          whileInView={{ opacity: 0.04, rotate: 0 }}
-          transition={{ duration: 2 }}
-          viewport={{ once: true }}
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 pointer-events-none"
-        >
-          <Brain className="w-[600px] h-[600px] text-white" />
-        </motion.div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* ═══════════════════════════════════════════════════════════════════
+          TRANSFORMATION SECTION - Philosophy Intro
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 relative overflow-hidden" style={{ background: "#0a0814" }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={staggerContainer}
-            className="flex flex-col md:flex-row items-center gap-16"
+            className="grid md:grid-cols-2 gap-16 items-center"
           >
-            <motion.div variants={fadeInUp} className="md:w-1/3 text-center">
-              <motion.div
-                whileHover={{ rotate: 180, scale: 1.1 }}
-                transition={{ duration: 0.5 }}
-                className="inline-flex items-center justify-center p-6 rounded-full mb-6"
-                style={{
-                  background: "rgba(247,37,133,0.08)",
-                  border: "1px solid rgba(247,37,133,0.3)",
-                  boxShadow: "0 0 30px rgba(247,37,133,0.15)",
-                }}
-              >
-                <Lightbulb
-                  className="h-16 w-16"
-                  style={{ color: "#f72585", filter: "drop-shadow(0 0 10px rgba(247,37,133,0.6))" }}
-                />
-              </motion.div>
-              <h2 className="text-5xl md:text-6xl font-extrabold tracking-tight text-white mb-2">
-                <ScatterText text="Maieutic" />
-              </h2>
-              <p
-                className="font-bold tracking-[0.3em] uppercase text-sm"
+            {/* Left - Text Content */}
+            <motion.div variants={slideInLeft}>
+              <span 
+                className="text-sm font-bold tracking-[0.2em] uppercase mb-4 block"
                 style={{ color: "#f72585" }}
               >
-                <ScatterText text="[마이유틱]" />
+                Challenge for Transformation
+              </span>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                끊임없는 미래 지향적인<br />
+                <span className="gradient-text-neon">발상의 전환</span>으로
+              </h2>
+              <p className="text-lg leading-relaxed mb-8" style={{ color: "#94a3b8" }}>
+                아이들이 단순히 기술을 따라하는 것이 아니라,
+                철학적 질문을 통해 사고의 구조를 세우고 
+                코딩으로 표현하게 합니다.
+                다음 세대를 위한 AI 교육과 서비스를 준비합니다.
               </p>
+              <Magnetic>
+                <Link href="/philosophy">
+                  <motion.div
+                    whileHover={{ x: 10 }}
+                    className="inline-flex items-center space-x-2 font-semibold"
+                    style={{ color: "#00d4ff" }}
+                  >
+                    <span>교육 철학 알아보기</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.div>
+                </Link>
+              </Magnetic>
             </motion.div>
 
-            <motion.div variants={fadeInUp} className="md:w-2/3">
-              <h3 className="text-3xl font-bold mb-6 text-white">
-                <ScatterText text="왜 'Maieutic(마이유틱)'인가요?" />
-              </h3>
-              <p className="text-xl leading-relaxed mb-6 font-medium" style={{ color: "#94a3b8" }}>
-                <ScatterText text="마이유틱(Maieutic)은 고대 그리스 철학자 소크라테스의 교육법인 " />
-                <strong
-                  className="border-b-2 pb-1"
-                  style={{ color: "#f72585", borderColor: "#f72585" }}
-                >
-                  <ScatterText text="산파술(조산술)" />
-                </strong>
-                <ScatterText text="을 뜻합니다." />
-              </p>
-              <p className="text-lg leading-relaxed" style={{ color: "#64748b" }}>
-                <ScatterText text="우리는 아이들에게 그저 정답을 주입하지 않습니다. 대신 아이들이 내면에 가진 '생각의 씨앗'이 발아하도록 끊임없이 " />
-                <strong style={{ color: "#00d4ff" }}>
-                  <ScatterText text="질문(Question)" />
-                </strong>
-                <ScatterText text="을 던집니다. 스스로 해답을 낳게 도와주는 과정, 그것이 바로 코딩보다 더 큰 세상을 배우는 Maieutic AI Edu의 철학입니다." />
-              </p>
+            {/* Right - Visual Element */}
+            <motion.div variants={slideInRight} className="relative">
+              <div className="relative aspect-square max-w-md mx-auto">
+                {/* Rotating ring */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full"
+                  style={{ 
+                    border: "1px solid rgba(247,37,133,0.3)",
+                  }}
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-8 rounded-full"
+                  style={{ 
+                    border: "1px dashed rgba(0,212,255,0.3)",
+                  }}
+                />
+                
+                {/* Center icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    className="w-32 h-32 rounded-full flex items-center justify-center"
+                    style={{ 
+                      background: "rgba(247,37,133,0.1)",
+                      boxShadow: "0 0 60px rgba(247,37,133,0.3)"
+                    }}
+                  >
+                    <Lightbulb className="w-16 h-16" style={{ color: "#f72585" }} />
+                  </motion.div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* ─── Philosophy Cards ─── */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          STATS SECTION - Counter Animation (ETEVERS Style)
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 relative" style={{ background: "#07050f" }}>
+        {/* Background gradient */}
+        <div 
+          className="absolute inset-0 opacity-50"
+          style={{
+            background: "radial-gradient(ellipse at center, rgba(247,37,133,0.05) 0%, transparent 70%)"
+          }}
+        />
+        
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            variants={staggerContainer}
+            className="text-center mb-16"
+          >
+            <motion.p variants={fadeIn} className="text-lg mb-2" style={{ color: "#64748b" }}>
+              끊임없이 변화해 온 AI 교육의 중심에서
+            </motion.p>
+            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-white">
+              마이유틱 AI 에듀는 학생들과 함께 성장해왔습니다
+            </motion.h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {/* Stat 1 */}
+            <motion.div 
+              variants={scaleUp}
+              className="text-center p-8 rounded-2xl relative overflow-hidden group"
+              style={{ background: "rgba(13,10,26,0.6)", border: "1px solid rgba(247,37,133,0.15)" }}
+            >
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: "radial-gradient(circle at center, rgba(247,37,133,0.1) 0%, transparent 70%)" }}
+              />
+              <p className="text-sm font-medium mb-2 tracking-wider" style={{ color: "#f72585" }}>
+                교육 경력
+              </p>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>풍부한 교육 경험</p>
+              <div className="text-6xl md:text-7xl font-black text-white relative z-10">
+                <span ref={yearsCounter.ref}>{yearsCounter.count}</span>
+                <span className="text-3xl" style={{ color: "#f72585" }}>년</span>
+              </div>
+            </motion.div>
+
+            {/* Stat 2 */}
+            <motion.div 
+              variants={scaleUp}
+              className="text-center p-8 rounded-2xl relative overflow-hidden group"
+              style={{ background: "rgba(13,10,26,0.6)", border: "1px solid rgba(0,212,255,0.15)" }}
+            >
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: "radial-gradient(circle at center, rgba(0,212,255,0.1) 0%, transparent 70%)" }}
+              />
+              <p className="text-sm font-medium mb-2 tracking-wider" style={{ color: "#00d4ff" }}>
+                누적 수강생
+              </p>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>함께 성장한 학생들</p>
+              <div className="text-6xl md:text-7xl font-black text-white relative z-10">
+                <span ref={studentsCounter.ref}>{studentsCounter.count}</span>
+                <span className="text-3xl" style={{ color: "#00d4ff" }}>+명</span>
+              </div>
+            </motion.div>
+
+            {/* Stat 3 */}
+            <motion.div 
+              variants={scaleUp}
+              className="text-center p-8 rounded-2xl relative overflow-hidden group"
+              style={{ background: "rgba(13,10,26,0.6)", border: "1px solid rgba(255,106,0,0.15)" }}
+            >
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: "radial-gradient(circle at center, rgba(255,106,0,0.1) 0%, transparent 70%)" }}
+              />
+              <p className="text-sm font-medium mb-2 tracking-wider" style={{ color: "#ff6a00" }}>
+                교육 프로그램
+              </p>
+              <p className="text-xs mb-4" style={{ color: "#64748b" }}>체계적인 커리큘럼</p>
+              <div className="text-6xl md:text-7xl font-black text-white relative z-10">
+                <span ref={programsCounter.ref}>{programsCounter.count}</span>
+                <span className="text-3xl" style={{ color: "#ff6a00" }}>개</span>
+              </div>
+            </motion.div>
+          </motion.div>
+          
+          <p className="text-center mt-8 text-sm" style={{ color: "#475569" }}>
+            2024년도 기준
+          </p>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          INNOVATION SECTION - Better Tomorrow
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 relative overflow-hidden" style={{ background: "#0d0a1a" }}>
+        {/* Decorative background text */}
+        <motion.div
+          initial={{ opacity: 0, x: -100 }}
+          whileInView={{ opacity: 0.02, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 text-[20rem] font-black text-white whitespace-nowrap pointer-events-none"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          INNOVATION
+        </motion.div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp} className="mb-20">
+              <span 
+                className="text-sm font-bold tracking-[0.2em] uppercase mb-4 block"
+                style={{ color: "#00d4ff" }}
+              >
+                Innovation for a Better Tomorrow
+              </span>
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+                더 좋은 미래를<br />
+                <span className="gradient-text-neon">가능하게 하는 혁신</span>
+              </h2>
+              <p className="text-lg max-w-2xl" style={{ color: "#94a3b8" }}>
+                마이유틱 AI 에듀는 미래 목표 실현을 위해 현재의 실질적인 성과와 구체적인 변화를 추구합니다.
+                각 분야에서 지속 가능한 가치를 창조해 나가는 마이유틱과 함께 미래를 현실로 만들어가는 여정을 함께해 보세요.
+              </p>
+            </motion.div>
+
+            {/* Group Companies - Horizontal Cards */}
+            <motion.div 
+              variants={fadeInUp}
+              className="mb-12"
+            >
+              <h3 className="text-2xl font-bold text-white mb-8">교육 프로그램</h3>
+              <p className="text-base mb-8" style={{ color: "#64748b" }}>
+                실질적인 AI 교육(디지털 트랜스포메이션)을 이끌어내는 통합적인 커리큘럼과 서비스를 제공합니다.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {groupCompanies.map((company, index) => (
+                <motion.div
+                  key={index}
+                  variants={fadeInUp}
+                  whileHover={{ 
+                    y: -10,
+                    boxShadow: `0 20px 40px rgba(0,0,0,0.4), 0 0 20px ${company.color}20`
+                  }}
+                  className="p-6 rounded-2xl relative overflow-hidden cursor-pointer transition-all duration-300 group"
+                  style={{ 
+                    background: "rgba(7,5,15,0.8)",
+                    border: `1px solid ${company.color}20`
+                  }}
+                >
+                  {/* Number */}
+                  <span 
+                    className="text-5xl font-black opacity-20 absolute top-4 right-4"
+                    style={{ color: company.color }}
+                  >
+                    {company.num}
+                  </span>
+                  
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <h4 className="text-xl font-bold text-white mb-2">{company.title}</h4>
+                    <p className="text-sm mb-4" style={{ color: company.color }}>{company.subtitle}</p>
+                    <p className="text-sm" style={{ color: "#64748b" }}>{company.desc}</p>
+                  </div>
+
+                  {/* Hover line */}
+                  <motion.div
+                    className="absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-500"
+                    style={{ background: company.color }}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PHILOSOPHY CARDS SECTION
+      ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-32" style={{ background: "#07050f" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -270,10 +633,10 @@ export default function Home() {
             variants={staggerContainer}
           >
             <motion.h2 variants={fadeInUp} className="text-4xl md:text-5xl font-extrabold text-white mb-6">
-              <ScatterText text="생각의 근육을 키우는 AI 교육" />
+              생각의 근육을 키우는 AI 교육
             </motion.h2>
             <motion.p variants={fadeInUp} className="text-xl mb-16 max-w-2xl mx-auto font-medium" style={{ color: "#64748b" }}>
-              <ScatterText text="우리는 '정답'을 찾는 기계가 아닌, '질문'을 던지는 창조자를 길러냅니다." />
+              우리는 &apos;정답&apos;을 찾는 기계가 아닌, &apos;질문&apos;을 던지는 창조자를 길러냅니다.
             </motion.p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -321,10 +684,10 @@ export default function Home() {
                     {item.icon}
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-4">
-                    <ScatterText text={item.title} />
+                    {item.title}
                   </h3>
                   <p className="leading-relaxed text-lg" style={{ color: "#64748b" }}>
-                    <ScatterText text={item.desc} />
+                    {item.desc}
                   </p>
                 </motion.div>
               ))}
@@ -333,8 +696,103 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Program Preview ─── */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          NEWS SECTION (ETEVERS Style)
+      ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-32" style={{ background: "#0d0a1a" }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+          >
+            {/* Section Header */}
+            <motion.div 
+              variants={fadeInUp}
+              className="flex justify-between items-end mb-12"
+            >
+              <div>
+                <span 
+                  className="text-sm font-bold tracking-[0.2em] uppercase mb-4 block"
+                  style={{ color: "#f72585" }}
+                >
+                  NEWS
+                </span>
+                <h2 className="text-4xl font-bold text-white">최신 소식</h2>
+              </div>
+              <Magnetic>
+                <Link href="/insight">
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    className="flex items-center space-x-2 font-semibold"
+                    style={{ color: "#00d4ff" }}
+                  >
+                    <span>전체 보기</span>
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
+                </Link>
+              </Magnetic>
+            </motion.div>
+
+            {/* News Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {newsData.map((news, index) => (
+                <motion.article
+                  key={index}
+                  variants={fadeInUp}
+                  whileHover={{ 
+                    y: -8,
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+                  }}
+                  className="p-6 rounded-2xl cursor-pointer transition-all duration-300 group"
+                  style={{ 
+                    background: "rgba(7,5,15,0.8)",
+                    border: "1px solid rgba(255,255,255,0.06)"
+                  }}
+                >
+                  {/* Category & Date */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span 
+                      className="text-xs font-bold px-3 py-1 rounded-full"
+                      style={{ 
+                        background: "rgba(247,37,133,0.1)",
+                        color: "#f72585"
+                      }}
+                    >
+                      {news.category}
+                    </span>
+                    <span className="text-xs" style={{ color: "#475569" }}>
+                      {news.date}
+                    </span>
+                  </div>
+                  
+                  {/* Title */}
+                  <h3 className="text-lg font-bold text-white mb-3 group-hover:text-[#f72585] transition-colors duration-300 line-clamp-2">
+                    {news.title}
+                  </h3>
+                  
+                  {/* Description */}
+                  <p className="text-sm line-clamp-3" style={{ color: "#64748b" }}>
+                    {news.desc}
+                  </p>
+                  
+                  {/* Read more link */}
+                  <div className="mt-4 flex items-center space-x-1 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: "#00d4ff" }}>
+                    <span>자세히 보기</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          PROGRAM PREVIEW SECTION
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-32" style={{ background: "#07050f" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
@@ -348,10 +806,10 @@ export default function Home() {
             >
               <div className="text-left">
                 <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-                  <ScatterText text="대표 프로그램" />
+                  대표 프로그램
                 </h2>
                 <p className="text-xl font-medium" style={{ color: "#64748b" }}>
-                  <ScatterText text="아이의 성장 단계에 맞춘 체계적인 AI 커리큘럼" />
+                  아이의 성장 단계에 맞춘 체계적인 AI 커리큘럼
                 </p>
               </div>
               <Magnetic>
@@ -361,7 +819,7 @@ export default function Home() {
                     className="font-bold flex items-center space-x-2 text-lg"
                     style={{ color: "#f72585" }}
                   >
-                    <ScatterText text="전체 보기" />
+                    <span>전체 보기</span>
                     <ArrowRight className="h-5 w-5" />
                   </motion.div>
                 </Link>
@@ -396,17 +854,17 @@ export default function Home() {
                     className="inline-block px-3 py-1 text-xs font-bold rounded-full mb-6"
                     style={{ background: program.tagBg, color: program.accent }}
                   >
-                    <ScatterText text={program.tag} />
+                    {program.tag}
                   </span>
                   <h3 className="text-xl font-bold text-white mb-3">
-                    <ScatterText text={program.title} />
+                    {program.title}
                   </h3>
                   <p className="mb-6 font-medium" style={{ color: "#64748b" }}>
-                    <ScatterText text={program.desc} />
+                    {program.desc}
                   </p>
                   <div className="flex items-center text-sm font-semibold mt-auto" style={{ color: "#475569" }}>
                     <Target className="h-4 w-4 mr-2" style={{ color: program.accent }} />
-                    <ScatterText text={program.level} />
+                    {program.level}
                   </div>
                 </motion.div>
               ))}
@@ -415,27 +873,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── CTA ─── */}
-      <section className="py-32 relative overflow-hidden" style={{ background: "#07050f" }}>
-        {/* Neon cloud background echo */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-10 pointer-events-none"
-          style={{ backgroundImage: "url('/neon-cloud-bg.jpg')" }}
-        />
+      {/* ═══════════════════════════════════════════════════════════════════
+          CTA SECTION
+      ═══════════════════════════════════════════════════════════════════ */}
+      <section className="py-32 relative overflow-hidden" style={{ background: "#0a0814" }}>
+        {/* Background effects */}
         <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 10, repeat: Infinity }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
           style={{
-            background: "radial-gradient(circle, rgba(247,37,133,0.12) 0%, rgba(0,212,255,0.06) 50%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(247,37,133,0.1) 0%, rgba(0,212,255,0.05) 50%, transparent 70%)",
             filter: "blur(60px)",
           }}
         />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "linear-gradient(to bottom, #07050f 0%, transparent 20%, transparent 80%, #07050f 100%)" }}
-        />
-
+        
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <motion.div
             initial="hidden"
@@ -447,35 +899,38 @@ export default function Home() {
               variants={fadeInUp}
               className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight text-white"
             >
-              <ScatterText text="함께 고민하고 질문할 준비가 되었나요?" />
+              함께 고민하고 질문할 준비가 되었나요?
             </motion.h2>
             <motion.p
               variants={fadeInUp}
               className="text-xl mb-12 leading-relaxed"
               style={{ color: "#64748b" }}
             >
-              <ScatterText text="학교, 기관, 학부모님들의 다양한 교육 목적에 맞춘 최적화된 AI 수업을 제안해 드립니다." />
+              마이유틱 AI 에듀와 함께 아이의 생각 근육을 키워주세요.
+              <br className="hidden md:block" />
+              질문이 있으시면 언제든 연락해 주세요.
             </motion.p>
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-4">
               <Magnetic>
                 <Link href="/contact">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="btn-primary px-8 py-4 text-lg rounded-xl font-bold"
+                    className="btn-primary flex items-center justify-center space-x-2 py-4 px-10 text-lg"
                   >
-                    <ScatterText text="출강 및 수업 문의하기" />
+                    <span>출강 문의하기</span>
+                    <ArrowRight className="h-5 w-5" />
                   </motion.div>
                 </Link>
               </Magnetic>
               <Magnetic>
-                <Link href="/philosophy">
+                <Link href="/programs">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="btn-secondary px-8 py-4 text-lg rounded-xl font-bold"
+                    className="btn-secondary flex items-center justify-center space-x-2 py-4 px-10 text-lg"
                   >
-                    <ScatterText text="교육 철학 더 읽어보기" />
+                    <span>프로그램 보기</span>
                   </motion.div>
                 </Link>
               </Magnetic>
@@ -483,6 +938,7 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
     </div>
   );
 }
